@@ -30,7 +30,6 @@ def get_tilt_angles(x, y, z):
 eye_cascade = cv2.CascadeClassifier('./opencv-master/data/haarcascades/haarcascade_eye_tree_eyeglasses.xml')
 
 
-dispense = False
 eyes_open_start = None  # Track when the eyes first open
 eyes_closed_start = None  # Track when the eyes disappear
 # Initialize variables
@@ -45,8 +44,8 @@ def calculate_ear(eye):
 
 
 def process_frame(frame):
-    global eyes_open_start, eyes_closed_start, dispense
-
+    global eyes_open_start, eyes_closed_start
+    dispense = False
     # Convert to grayscale
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
@@ -73,7 +72,7 @@ def process_frame(frame):
             print("Blink detected (eyes disappeared too long)")
             eyes_open_start = None  # Reset open timer
 
-    return frame
+    return frame, dispense
 
 def main():
     # Initialize PiCamera2
@@ -87,7 +86,7 @@ def main():
         frame = picam2.capture_array()  # Capture frame as NumPy array
         '''frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)  # Convert RGB → BGR for OpenCV
 '''
-        processed_frame = process_frame(frame)
+        processed_frame, dispense = process_frame(frame)
         x, y, z = accelerometer.acceleration
         roll, pitch = get_tilt_angles(x, y, z)
 
@@ -95,6 +94,7 @@ def main():
             print("correct angle")
             if dispense:
                 subprocess.run(['python', 'stepper_motor.py'])
+                dispense = False
     #    print("TEST")
 
         # Display the processed frame
