@@ -1,10 +1,23 @@
+import subprocess
+
 import cv2
 import numpy as np
 import time
 from picamera2 import Picamera2
 
+def open_ffmpeg_stream_process():
+    args = (
+        "ffmpeg -re -stream_loop -1 -f rawvideo -pix_fmt "
+        "rgb24 -s 1920x1080 -i pipe:0 -pix_fmt yuv420p "
+        "-f rtsp rtsp://rtsp_server:8554/stream"
+    ).split()
+    return subprocess.Popen(args, stdin=subprocess.PIPE)
+
+ffmpeg_process = open_ffmpeg_stream_process()
 # Load Haarcascade eye detector
 eye_cascade = cv2.CascadeClassifier('./opencv-master/data/haarcascades/haarcascade_eye_tree_eyeglasses.xml')
+
+
 
 # Initialize variables
 scale_factor = 1
@@ -64,7 +77,7 @@ def main():
 
         # Display the processed frame
        #  cv2.imshow("Blink Detection", processed_frame)
-
+        ffmpeg_process.stdin.write(processed_frame.astype(np.uint8).tobytes())
         # Exit on 'q' key press
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
