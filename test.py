@@ -11,7 +11,7 @@ eye_cascade = cv2.CascadeClassifier('./opencv-master/data/haarcascades/haarcasca
 
 
 # Initialize variables
-scale_factor = 1
+scale_factor = 3
 eyes_open_start_time = 0
 
 def calculate_ear(eye):
@@ -29,7 +29,7 @@ def process_frame(frame):
     gray = cv2.cvtColor(resized_frame, cv2.COLOR_BGR2GRAY)
 
     # Simulated face region for eye detection (Replace with face detector if needed)
-    x, y, w, h = 0, 0, 100, 100
+    x, y, w, h = 0, 0, 1920, 1080
     cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 3)
 
     face_roi = gray[y:y + h, x:x + w]
@@ -54,15 +54,15 @@ def process_frame(frame):
 def main():
     # Initialize PiCamera2
     picam2 = Picamera2()
-    picam2.preview_configuration.main.size = (640, 480)  # Set resolution
+    picam2.preview_configuration.main.size = (1280, 720)  # Set resolution
     picam2.preview_configuration.main.format = "RGB888"  # Set format
     picam2.configure("preview")
     picam2.start()
 
     while True:
         frame = picam2.capture_array()  # Capture frame as NumPy array
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)  # Convert RGB → BGR for OpenCV
-
+        '''frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)  # Convert RGB → BGR for OpenCV
+'''
         processed_frame = process_frame(frame)
     #    print("TEST")
 
