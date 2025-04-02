@@ -1,37 +1,33 @@
 import cv2
 import numpy as np
 import time
+from picamera2 import Picamera2
 
-# Load pre-trained classifiers
+# Load Haarcascade eye detector
 eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye_tree_eyeglasses.xml')
 
 # Initialize variables
-scale_factor = 3.0
-eyes_open_start_time = 0
-is_server_called = False
 scale_factor = 1
+eyes_open_start_time = 0
 
 def calculate_ear(eye):
     x, y, w, h = eye
-    return w / h  # Simple EAR approximation as width/height
+    return w / h  # Approximate EAR (Eye Aspect Ratio) using width/height
 
 
 def process_frame(frame):
-    global eyes_open_start_time, is_server_called
+    global eyes_open_start_time
 
-    # Resize frame to improve processing speed
-    resized_frame = cv2.resize(frame, (frame.shape[1] // int(scale_factor), frame.shape[0] // int(scale_factor)))
+    # Resize frame for faster processing
+    resized_frame = cv2.resize(frame, (frame.shape[1] // scale_factor, frame.shape[0] // scale_factor))
 
     # Convert to grayscale
     gray = cv2.cvtColor(resized_frame, cv2.COLOR_BGR2GRAY)
 
-    # Detect faces
-    ear = 0
-    x = 100
-    y = 100
-    w = 200
-    h = 200
+    # Simulated face region for eye detection (Replace with face detector if needed)
+    x, y, w, h = 100, 100, 200, 200
     cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 3)
+
     face_roi = gray[y:y + h, x:x + w]
 
     # Detect eyes
@@ -47,29 +43,30 @@ def process_frame(frame):
         eye_status = "Blink Detected" if ear < 0.2 else "Eyes Open"
         cv2.putText(frame, eye_status, eye_top_left, cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
 
-
     return frame
 
 
 def main():
-    cap = cv2.VideoCapture(0)
+    # Initialize PiCamera2
+    picam2 = Picamera2()
+    picam2.preview_configuration.main.size = (640, 480)  # Set resolution
+    picam2.preview_configuration.main.format = "RGB888"  # Set format
+    picam2.configure("preview")
+    picam2.start()
+
     while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
+        frame = picam2.capture_array()  # Capture frame as NumPy array
+        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)  # Convert RGB → BGR for OpenCV
 
         processed_frame = process_frame(frame)
 
-        # Display EAR and Scale Factor
-
-
+        # Display the processed frame
         cv2.imshow("Blink Detection", processed_frame)
 
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'):
+        # Exit on 'q' key press
+        if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
-    cap.release()
     cv2.destroyAllWindows()
 
 
